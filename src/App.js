@@ -2,50 +2,29 @@ import React, { useState, useEffect } from "react";
 import {
   Music,
   Armchair,
-  Heart,
-  Coffee,
-  Calendar,
-  Clock,
-  User,
-  ChevronRight,
   Wine,
   X,
   Check,
   Lock,
-  Eye,
+  ChevronRight,
   AlertCircle,
   ArrowRight,
   Zap,
   Users,
   Cloud,
   Moon,
-  GlassWater,
   AtSign,
-  MessageSquare,
-  Settings,
-  Power,
-  Ban,
-  Plus,
   Trash2,
-  Edit2,
   Loader2,
-  Wifi,
-  WifiOff,
-  Flame,
   Volume2,
+  Flame,
+  Calendar,
   CalendarPlus,
-  Share2,
-  Camera,
   RotateCcw,
-  Sparkles,
   Quote,
   Radio,
   Pin,
-  Compass,
-  Shield,
-  MapPin,
-  Gem,
-  Ghost,
+  TreeDeciduous,
 } from "lucide-react";
 
 import { initializeApp } from "firebase/app";
@@ -56,16 +35,14 @@ import {
   onSnapshot,
   doc,
   setDoc,
-  getDoc,
   updateDoc,
   deleteDoc,
 } from "firebase/firestore";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 // ==========================================
-// ★ 設定區：Firebase 鑰匙 ★
+// ★ Firebase 鑰匙設定 ★
 // ==========================================
-
 const firebaseConfig = {
   apiKey: "AIzaSyCXQA8lA8_p1_ni2hb3EP85iWWHov7W6t8",
   authDomain: "thirtybistro-f8f49.firebaseapp.com",
@@ -75,13 +52,6 @@ const firebaseConfig = {
   appId: "1:466579634030:web:19425ec805ef5248c9f37f",
 };
 
-const emailConfig = {
-  serviceID: "service_rlmha4o",
-  templateID: "template_5oj9a5m",
-  publicKey: "L721UTMrL0vn2z0qJ",
-};
-
-// 初始化 Firebase
 let app, auth, db;
 try {
   app = initializeApp(firebaseConfig);
@@ -92,13 +62,24 @@ try {
 }
 
 const appId = "thirty-speakeasy-v1";
+const ALL_POSSIBLE_SLOTS = [
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+  "22:00",
+  "23:00",
+];
 
 // --- 題目資料 ---
 const VIBE_QUESTIONS = [
   {
     id: "sound",
     question: "推開沈重的木門，你希望空氣中流淌著什麼樣的聲音？",
-    subtext: "第一秒的聽覺，決定了今晚的頻率",
     options: [
       {
         id: "rock",
@@ -129,7 +110,6 @@ const VIBE_QUESTIONS = [
   {
     id: "seat",
     question: "穿過微暗的長廊，若要尋找一處安放身心的角落，你會走向...？",
-    subtext: "身體的直覺，會帶你去最舒適的地方",
     options: [
       {
         id: "bar",
@@ -141,26 +121,25 @@ const VIBE_QUESTIONS = [
         id: "lounge",
         label: "Sofa Lounge",
         icon: <Users size={24} />,
-        desc: "深陷柔軟角落，期待一場敞開心扉的深度交流",
+        desc: "深陷柔軟角落，期待深度交流",
       },
       {
         id: "table",
         label: "Open Table",
         icon: <Armchair size={24} />,
-        desc: "置身人群之中，期待認識新朋友的契機",
+        desc: "置身人群之中，期待認識新朋友",
       },
       {
         id: "anywhere",
         label: "Anywhere",
         icon: <Radio size={24} />,
-        desc: "不在乎位置，只想離音響近一點，讓重低音震動心臟",
+        desc: "只想讓重低音震動心臟",
       },
     ],
   },
   {
     id: "mood",
     question: "現在的你，內心是什麼顏色？",
-    subtext: "每一種情緒，都有屬於它的色溫",
     options: [
       {
         id: "expect",
@@ -186,7 +165,6 @@ const VIBE_QUESTIONS = [
   {
     id: "taste",
     question: "調酒師遞給你一杯酒，直覺告訴你，那是一杯...？",
-    subtext: "你的潛意識，決定了入口的風味",
     options: [
       { id: "gimlet", label: "Gimlet", desc: "酸楚卻清晰的直率" },
       { id: "clover", label: "Clover Club", desc: "絲絨般的莓果香甜" },
@@ -196,69 +174,43 @@ const VIBE_QUESTIONS = [
   },
 ];
 
-const ALL_POSSIBLE_SLOTS = [
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-  "19:00",
-  "20:00",
-  "21:00",
-  "22:00",
-  "23:00",
-];
-
 // --- UI Components ---
-
 const Button = ({
   children,
   onClick,
   variant = "primary",
-  className = "",
   disabled = false,
+  className = "",
 }) => {
-  const baseStyle =
-    "px-6 py-3 transition-all duration-500 font-serif tracking-wider uppercase text-sm flex items-center justify-center gap-2";
-  const variants = {
-    primary:
-      "bg-[#4a0404] text-[#e5d5b0] hover:bg-[#680606] border border-[#4a0404]",
-    outline:
-      "bg-transparent border border-[#333] text-[#a89f91] hover:text-[#e5d5b0] hover:border-[#e5d5b0]",
-    ghost: "text-[#5c4033] hover:text-[#8a6a57]",
-    danger:
-      "bg-[#2a0e0e] text-[#a89f91] border border-[#4a0404] hover:bg-[#4a0404] hover:text-[#e5d5b0]",
-    text: "text-[#666] hover:text-[#8a6a57] text-xs normal-case tracking-normal border-none",
-  };
+  const base =
+    "px-6 py-3 transition-all duration-500 font-serif tracking-widest uppercase text-sm flex items-center justify-center gap-2 rounded-sm";
+  const style =
+    variant === "primary"
+      ? "bg-[#4a0404] text-[#e5d5b0] hover:bg-[#680606] border border-[#4a0404] shadow-xl"
+      : "bg-transparent border border-[#333] text-[#a89f91] hover:text-[#e5d5b0]";
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${baseStyle} ${variants[variant]} ${className} ${
+      className={`${base} ${style} ${className} ${
         disabled ? "opacity-50 cursor-not-allowed" : ""
       }`}
     >
-      {disabled && variant === "primary" ? (
-        <Loader2 className="animate-spin" size={16} />
-      ) : (
-        children
-      )}
+      {children}
     </button>
   );
 };
 
-const Card = ({ children, className = "", onClick, selected = false }) => (
+const Card = ({ children, onClick, selected, className = "" }) => (
   <div
     onClick={onClick}
-    className={`relative p-6 cursor-pointer transition-all duration-500 border ${
-      selected
-        ? "bg-[#2a0e0e] border-[#e5d5b0] shadow-[0_0_15px_rgba(229,213,176,0.1)]"
-        : "bg-[#1a1a1a] border-[#333] hover:border-[#5c4033]"
+    className={`relative p-6 cursor-pointer transition-all border ${
+      selected ? "bg-[#2a0e0e] border-[#e5d5b0]" : "bg-[#1a1a1a] border-[#333]"
     } ${className}`}
   >
     {children}
     {selected && (
-      <div className="absolute top-2 right-2 text-[#e5d5b0] animate-in fade-in zoom-in duration-300">
+      <div className="absolute top-2 right-2 text-[#e5d5b0] animate-in fade-in zoom-in">
         <Check size={16} />
       </div>
     )}
@@ -266,86 +218,93 @@ const Card = ({ children, className = "", onClick, selected = false }) => (
 );
 
 // --- Pages ---
-
-const LandingPage = ({ onStart, onSkip, onLogoClick, savedUser }) => {
+const LandingPage = ({ onStart, onSkip, savedUser }) => {
+  const [showConfirm, setShowConfirm] = useState(false);
   return (
     <div className="h-full flex flex-col items-center justify-center text-center px-6 animate-fade-in relative z-10">
-      <div
-        className="mb-12 relative group cursor-pointer flex flex-col items-center"
-        onClick={onLogoClick}
-      >
-        <div className="w-[1px] h-24 bg-gradient-to-b from-transparent via-[#4a0404] to-[#4a0404] mx-auto mb-6 group-hover:h-28 group-hover:bg-[#e5d5b0] transition-all duration-700 ease-in-out"></div>
+      <div className="mb-12 flex flex-col items-center">
+        <div className="w-[1px] h-20 bg-[#4a0404] mb-6"></div>
         {savedUser ? (
-          <div className="animate-fade-in">
-            <p className="text-[#8a6a57] text-xs uppercase tracking-[0.2em] mb-2 font-serif">
+          <div>
+            <p className="text-[#8a6a57] text-xs tracking-widest mb-2 font-serif uppercase">
               Welcome Back
             </p>
-            <h1 className="text-3xl md:text-5xl font-serif text-[#e5d5b0] tracking-widest mb-3">
+            <h1 className="text-3xl font-serif text-[#e5d5b0]">
               {savedUser.name}
             </h1>
           </div>
         ) : (
-          <>
+          <div>
             <h1 className="text-4xl md:text-6xl font-serif text-[#e5d5b0] tracking-widest mb-3">
               三拾酒館
             </h1>
             <p className="text-[#8a6a57] font-serif italic text-sm tracking-[0.3em] uppercase">
               Thirty Speakeasy
             </p>
-          </>
+          </div>
         )}
       </div>
-
-      <p className="text-[#a89f91] max-w-md mb-12 leading-loose font-serif text-sm md:text-base opacity-80 h-16">
-        {savedUser ? (
-          <>
-            旅人，歡迎回來。
-            <br />
-            聊聊這趟旅途，有沒有讓靈魂產生些許變化？
-          </>
-        ) : (
-          <>
-            這裡不只是酒館，是拾起散落快樂的地方。
-            <br />
-            推開門之前，我們先聊聊你的靈魂。
-          </>
-        )}
+      <p className="text-[#a89f91] text-sm max-w-sm mb-12 leading-loose opacity-80 h-16">
+        推開門之前，我們先聊聊你的靈魂。
       </p>
-
       <div className="space-y-8 flex flex-col items-center">
         <Button onClick={onStart}>
           {savedUser ? "再次探索靈魂" : "Begin The Journey"}{" "}
           <ChevronRight size={16} />
         </Button>
         <button
-          onClick={onSkip}
-          className="text-zinc-300 text-xs tracking-widest uppercase border-b border-zinc-500 hover:border-white transition-all pb-0.5"
+          onClick={() => (savedUser ? onSkip() : setShowConfirm(true))}
+          className="text-zinc-400 text-xs tracking-widest uppercase border-b border-zinc-600 hover:text-white pb-0.5"
         >
           跳過測驗，直接預約
         </button>
       </div>
+      {showConfirm && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-6">
+          <div className="bg-[#151515] border border-[#4a0404] p-8 max-w-sm text-center shadow-2xl rounded-sm">
+            <AlertCircle className="mx-auto text-[#4a0404] mb-4" size={32} />
+            <h3 className="text-xl text-[#e5d5b0] font-serif mb-4 tracking-wide">
+              確定要略過嗎？
+            </h3>
+            <p className="text-[#a89f91] text-sm mb-8 leading-relaxed">
+              跳過測驗，您將錯失體驗{" "}
+              <span className="text-white font-bold border-b border-[#4a0404]">
+                「Thirty Talk」
+              </span>{" "}
+              遊戲的機會。我們將無法為您調製專屬風味。
+            </p>
+            <div className="flex flex-col gap-3">
+              <Button onClick={onStart}>返回測驗 (推薦)</Button>
+              <button
+                onClick={onSkip}
+                className="text-zinc-600 text-xs py-2 hover:text-white transition-colors"
+              >
+                沒關係，忍痛放棄
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 const QuizPage = ({ onAnswerComplete, currentAnswers }) => {
   const [qIndex, setQIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isTrans, setIsTrans] = useState(false);
   const currentQ = VIBE_QUESTIONS[qIndex];
-
-  const handleOptionClick = (optionId) => {
-    onAnswerComplete(currentQ.id, optionId);
-    setIsTransitioning(true);
+  const handleSelect = (id) => {
+    onAnswerComplete(currentQ.id, id);
+    setIsTrans(true);
     setTimeout(() => {
       if (qIndex < VIBE_QUESTIONS.length - 1) {
-        setQIndex((prev) => prev + 1);
-        setIsTransitioning(false);
+        setQIndex((i) => i + 1);
+        setIsTrans(false);
       } else {
         onAnswerComplete("DONE", null);
       }
     }, 400);
   };
-
   return (
     <div className="h-full flex flex-col max-w-2xl mx-auto px-6 pt-12 pb-6 relative z-10">
       <div className="flex-1">
@@ -359,51 +318,34 @@ const QuizPage = ({ onAnswerComplete, currentAnswers }) => {
               / 0{VIBE_QUESTIONS.length}
             </span>
           </div>
-          <span className="text-[#555] text-xs tracking-widest uppercase">
+          <span className="text-[#555] text-xs tracking-widest uppercase font-mono">
             Soul Archive
           </span>
         </div>
         <div
-          key={currentQ.id}
           className={`transition-opacity duration-300 ${
-            isTransitioning ? "opacity-0" : "opacity-100"
+            isTrans ? "opacity-0" : "opacity-100"
           }`}
         >
-          <h2 className="text-2xl md:text-3xl text-[#e5d5b0] font-serif mb-2">
+          <h2 className="text-2xl text-[#e5d5b0] font-serif mb-10">
             {currentQ.question}
           </h2>
-          <p className="text-[#8a6a57] italic mb-10 text-sm">
-            {currentQ.subtext}
-          </p>
-          <div
-            className={`grid gap-4 ${
-              currentQ.options.length > 3
-                ? "grid-cols-1 md:grid-cols-2"
-                : "grid-cols-1 md:grid-cols-3"
-            }`}
-          >
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
             {currentQ.options.map((opt) => (
               <Card
                 key={opt.id}
-                onClick={() => handleOptionClick(opt.id)}
+                onClick={() => handleSelect(opt.id)}
                 selected={currentAnswers[currentQ.id] === opt.id}
-                className="group hover:-translate-y-1"
               >
                 <div className="flex items-center gap-4">
-                  {opt.icon && (
-                    <div className="text-[#5c4033] group-hover:text-[#e5d5b0] transition-colors">
-                      {opt.icon}
-                    </div>
-                  )}
+                  {opt.icon && <div className="text-[#5c4033]">{opt.icon}</div>}
                   {opt.color && (
                     <div
-                      className={`w-6 h-6 rounded-full ${opt.color} opacity-70`}
+                      className={`w-5 h-5 rounded-full ${opt.color} opacity-70`}
                     ></div>
                   )}
-                  <div className="text-left">
-                    <h3 className="text-[#dcdcdc] font-serif text-lg">
-                      {opt.label}
-                    </h3>
+                  <div className="text-left font-serif">
+                    {opt.label}
                     <p className="text-[#666] text-xs mt-1">{opt.desc}</p>
                   </div>
                 </div>
@@ -417,28 +359,31 @@ const QuizPage = ({ onAnswerComplete, currentAnswers }) => {
 };
 
 const TeaserPage = ({ onNext }) => (
-  <div className="h-full flex flex-col items-center justify-center text-center px-6 animate-fade-in bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#2a0e0e] to-[#0a0a0a] relative z-10">
-    <div className="border border-[#e5d5b0] p-1 inline-block mb-8 rounded-sm">
-      <div className="border border-[#e5d5b0] px-8 py-12 md:px-16 md:py-20 bg-[#1a1a1a]">
-        <Wine className="mx-auto text-[#4a0404] mb-6" size={32} />
-        <h2 className="text-3xl font-serif text-[#e5d5b0] mb-4">Thirty Talk</h2>
-        <div className="w-8 h-[1px] bg-[#5c4033] mx-auto mb-6"></div>
-        <p className="text-[#a89f91] max-w-sm mx-auto leading-relaxed font-serif text-sm">
+  <div className="h-full flex flex-col items-center justify-center text-center px-6 animate-fade-in bg-[#0a0a0a] relative z-10">
+    <div className="border border-[#e5d5b0] p-1 mb-10">
+      <div className="border border-[#e5d5b0] px-10 py-16 md:px-16 md:py-24 bg-[#1a1a1a]">
+        <Wine className="mx-auto text-[#4a0404] mb-8" size={40} />
+        <h2 className="text-3xl font-serif text-[#e5d5b0] mb-6 tracking-widest">
+          Thirty Talk
+        </h2>
+        <div className="w-12 h-[1px] bg-[#5c4033] mx-auto mb-8"></div>
+        <p className="text-[#a89f91] max-w-sm mx-auto leading-loose font-serif text-sm">
           我們捕捉到了，那份獨特的共鳴。
           <br />
           <br />
-          透過預約，你將獲得開啟「Thirty
-          Talk」遊戲的權限。這不僅是一杯酒，而是一場交換靈魂故事的深度對談。
+          透過預約，你將獲得開啟「Thirty Talk」遊戲的權限。
+          <br />
+          這不僅是一杯酒，而是一場交換靈魂故事的深度對談。
           <br />
           <br />
-          <span className="text-[#e5d5b0] font-medium tracking-wide text-base drop-shadow-md italic">
+          <span className="text-[#e5d5b0] italic font-medium">
             Let our stories intertwine.
           </span>
         </p>
       </div>
     </div>
-    <Button onClick={onNext} variant="primary">
-      預約入席 <Calendar size={16} />
+    <Button onClick={onNext}>
+      接受邀約，預約入席 <ArrowRight size={16} />
     </Button>
   </div>
 );
@@ -453,432 +398,211 @@ const BookingPage = ({ onSubmit, availability, isSubmitting, savedUser }) => {
     note: "",
   });
   const openDates = Object.keys(availability).sort();
-  const availableSlotsForDate =
-    data.date && availability[data.date] ? availability[data.date] : [];
-
+  const slots = data.date ? availability[data.date] || [] : [];
   return (
-    <div className="h-full flex flex-col items-center justify-start md:justify-center pt-20 md:pt-4 p-4 animate-fade-in overflow-y-auto relative z-10">
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-8 bg-[#151515] p-6 md:p-10 rounded-sm border border-[#333]">
-        <div className="flex flex-col gap-6">
+    <div className="h-full flex flex-col items-center justify-start pt-20 p-4 animate-fade-in overflow-y-auto no-scrollbar relative z-10">
+      <div className="w-full max-w-4xl bg-[#151515] p-6 md:p-10 border border-[#333] grid grid-cols-1 md:grid-cols-2 gap-10 rounded-sm">
+        <div className="space-y-8">
           <h3 className="text-[#e5d5b0] font-serif text-xl flex items-center gap-2">
-            <Calendar size={20} className="text-[#4a0404]" /> 選擇日期與時間
+            <Calendar size={20} className="text-[#4a0404]" /> 選擇預約
           </h3>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-[#8a6a57] text-xs uppercase tracking-widest mb-2">
-                Open Dates
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {openDates.length > 0 ? (
-                  openDates.map((dateStr) => (
-                    <button
-                      key={dateStr}
-                      onClick={() =>
-                        setData({ ...data, date: dateStr, time: "" })
-                      }
-                      className={`py-2 px-1 text-xs font-serif transition-all border ${
-                        data.date === dateStr
-                          ? "bg-[#e5d5b0] text-[#0a0a0a] border-[#e5d5b0] font-bold"
-                          : "bg-transparent border-[#333] text-[#a89f91] hover:border-[#5c4033]"
-                      }`}
-                    >
-                      {dateStr}
-                    </button>
-                  ))
-                ) : (
-                  <div className="col-span-full text-amber-500/80 text-sm font-bold border border-dashed border-amber-900/50 p-4 text-center">
-                    目前暫無開放日期
-                    <br />
-                    <span className="text-xs font-normal opacity-70">
-                      (管理員可點Logo進入設定)
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div
-              className={`transition-all duration-500 ${
-                data.date ? "opacity-100" : "opacity-30 pointer-events-none"
-              }`}
-            >
-              <label className="block text-[#8a6a57] text-xs uppercase tracking-widest mb-2">
-                Time
-              </label>
-              <div className="grid grid-cols-4 md:grid-cols-3 gap-2">
-                {availableSlotsForDate.length > 0 ? (
-                  availableSlotsForDate.sort().map((time) => (
-                    <button
-                      key={time}
-                      type="button"
-                      onClick={() => setData({ ...data, time })}
-                      className={`py-2 px-1 text-xs md:text-sm font-serif transition-all border ${
-                        data.time === time
-                          ? "bg-[#4a0404] border-[#4a0404] text-[#e5d5b0]"
-                          : "bg-transparent border-[#333] text-[#666] hover:border-[#5c4033]"
-                      }`}
-                    >
-                      {time}
-                    </button>
-                  ))
-                ) : (
-                  <div className="col-span-full text-zinc-200 font-bold text-sm border border-dashed border-zinc-600 p-4 text-center bg-zinc-900/50">
-                    {data.date
-                      ? "⚠️ 本日時段已滿或未開放"
-                      : "↑ 請先選擇上方日期"}
-                  </div>
-                )}
-              </div>
-            </div>
-            <div>
-              <label className="block text-[#8a6a57] text-xs uppercase tracking-widest mb-2">
-                Companions
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="10"
-                value={data.guests}
-                className="w-full bg-[#0a0a0a] border border-[#333] text-[#e5d5b0] p-3 focus:outline-none focus:border-[#4a0404] font-serif"
-                onChange={(e) =>
-                  setData({ ...data, guests: parseInt(e.target.value) || "" })
-                }
-              />
-            </div>
+          <div className="grid grid-cols-3 gap-2">
+            {openDates.map((d) => (
+              <button
+                key={d}
+                onClick={() => setData({ ...data, date: d, time: "" })}
+                className={`py-2 text-xs border ${
+                  data.date === d
+                    ? "bg-[#e5d5b0] text-black"
+                    : "border-[#333] text-[#a89f91]"
+                }`}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {slots.map((t) => (
+              <button
+                key={t}
+                onClick={() => setData({ ...data, time: t })}
+                className={`py-2 text-xs border ${
+                  data.time === t
+                    ? "bg-[#4a0404] text-[#e5d5b0]"
+                    : "border-[#333] text-[#666]"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <div>
+            <label className="text-[#8a6a57] text-[10px] block mb-2 uppercase tracking-widest">
+              Guests
+            </label>
+            <input
+              type="number"
+              value={data.guests}
+              className="w-full bg-black border border-[#333] text-white p-3 outline-none"
+              onChange={(e) => setData({ ...data, guests: e.target.value })}
+            />
           </div>
         </div>
-        <div className="flex flex-col justify-between gap-6 md:gap-0">
-          <div>
-            <h3 className="text-[#e5d5b0] font-serif text-xl mb-6 flex items-center gap-2">
-              <User size={20} className="text-[#4a0404]" /> 聯絡資訊
-            </h3>
-            <div className="space-y-4">
-              <input
-                required
-                value={data.name}
-                placeholder="Your Name"
-                className="w-full bg-transparent border-b border-[#333] text-[#e5d5b0] py-3 px-2 focus:outline-none focus:border-[#4a0404] font-serif placeholder-[#444]"
-                onChange={(e) => setData({ ...data, name: e.target.value })}
-              />
-              <div className="relative">
-                <input
-                  required
-                  value={data.contact}
-                  type="text"
-                  placeholder="IG / Line ID / 電話號碼"
-                  className="w-full bg-transparent border-b border-[#333] text-[#e5d5b0] py-3 pl-8 pr-2 focus:outline-none focus:border-[#4a0404] font-serif placeholder-[#444]"
-                  onChange={(e) =>
-                    setData({ ...data, contact: e.target.value })
-                  }
-                />
-                <AtSign
-                  size={16}
-                  className="absolute left-0 top-3.5 text-[#666]"
-                />
-              </div>
-              <div className="relative mt-6">
-                <label className="block text-[#8a6a57] text-xs uppercase tracking-widest mb-2 flex items-center gap-2">
-                  Whispers
-                </label>
-                <textarea
-                  rows="2"
-                  placeholder="留下一些給調酒師的悄悄話..."
-                  className="w-full bg-[#0a0a0a] border border-[#333] text-[#e5d5b0] p-3 text-sm focus:outline-none focus:border-[#4a0404] font-serif placeholder-[#444] resize-none"
-                  onChange={(e) => setData({ ...data, note: e.target.value })}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 md:mt-0">
-            <Button
-              variant="primary"
-              className="w-full"
-              disabled={
-                !data.date ||
-                !data.time ||
-                !data.name ||
-                !data.contact ||
-                isSubmitting
-              }
-              onClick={() => onSubmit(data)}
-            >
-              確認預約 (Confirm)
-            </Button>
-          </div>
+        <div className="space-y-6">
+          <h3 className="text-[#e5d5b0] font-serif text-xl">聯絡資訊</h3>
+          <input
+            placeholder="Your Name"
+            value={data.name}
+            className="w-full bg-transparent border-b border-[#333] py-3 text-white outline-none focus:border-[#4a0404]"
+            onChange={(e) => setData({ ...data, name: e.target.value })}
+          />
+          <input
+            placeholder="IG / Line ID"
+            value={data.contact}
+            className="w-full bg-transparent border-b border-[#333] py-3 text-white outline-none focus:border-[#4a0404]"
+            onChange={(e) => setData({ ...data, contact: e.target.value })}
+          />
+          <textarea
+            placeholder="Whispers..."
+            className="w-full bg-black/40 border border-[#333] p-4 text-white h-24 mt-4 outline-none focus:border-[#4a0404]"
+            onChange={(e) => setData({ ...data, note: e.target.value })}
+          />
+          <Button
+            disabled={!data.date || !data.time || !data.name || isSubmitting}
+            onClick={() => onSubmit(data)}
+            className="w-full mt-6"
+          >
+            確認預約 (Confirm)
+          </Button>
         </div>
       </div>
     </div>
   );
 };
 
-// ★ 成功頁面：滿版海報與古銅/象牙白質感優化
-const SuccessPage = ({ data, quizResult, onHome, onReplay }) => {
-  const hasQuizData = quizResult && Object.keys(quizResult).length > 0;
-
-  // ★ IG 連結設定區 ★
-  const IG_PROFILE_URL =
+const SuccessPage = ({ data, quizResult }) => {
+  const IG_URL =
     "https://www.instagram.com/30_speakeasy?igsh=MTRrZGZnbHBxbG42bw%3D%3D&utm_source=qr";
-
-  const createGoogleCalendarLink = () => {
-    const startDateTime = new Date(`${data.date}T${data.time}`);
-    const endDateTime = new Date(startDateTime.getTime() + 2 * 60 * 60 * 1000);
-    const formatTime = (date) =>
-      date.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const url = new URL("https://calendar.google.com/calendar/render");
-    url.searchParams.append("action", "TEMPLATE");
-    url.searchParams.append("text", "三拾酒館 訂位");
-    url.searchParams.append(
-      "dates",
-      `${formatTime(startDateTime)}/${formatTime(endDateTime)}`
-    );
-    url.searchParams.append(
-      "details",
-      `預約人: ${data.name}\n人數: ${data.guests}人\n備註: ${data.note || "無"}`
-    );
-    url.searchParams.append("location", "三拾酒館 Thirty Speakeasy");
-    return url.toString();
+  let persona = {
+    zh: "神秘旅人",
+    en: "THE MYSTERY",
+    quote: "你保留了靈魂的秘密，準備在今晚親自揭曉。",
+    kw: "#未知 #期待",
+    img: "https://i.ibb.co/JW22yLfJ/IMG-5297.jpg",
   };
-
-  const downloadICSFile = () => {
-    const startDateTime = new Date(`${data.date}T${data.time}`);
-    const endDateTime = new Date(startDateTime.getTime() + 2 * 60 * 60 * 1000);
-    const formatTime = (date) =>
-      date.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const icsContent = `BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nDTSTART:${formatTime(
-      startDateTime
-    )}\nDTEND:${formatTime(
-      endDateTime
-    )}\nSUMMARY:三拾酒館 訂位\nLOCATION:三拾酒館 Thirty Speakeasy\nEND:VEVENT\nEND:VCALENDAR`;
-    const blob = new Blob([icsContent], {
-      type: "text/calendar;charset=utf-8",
-    });
-    const link = document.createElement("a");
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute("download", "thirty_booking.ics");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  let zhName = "神秘旅人";
-  let enName = "THE MYSTERY";
-  let personaQuote = "你保留了靈魂的秘密，準備在今晚親自揭曉。";
-  let personaKeyword = "#未知 #期待";
-  let personaImage = "https://i.ibb.co/JW22yLfJ/IMG-5297.jpg";
-
-  if (hasQuizData) {
-    if (quizResult?.seat === "bar") {
-      zhName = "話題領航員";
-      enName = "THE NAVIGATOR";
-      personaQuote = "你掌握著夜晚的航向，與調酒師的對話是你探索未知的羅盤。";
-      personaKeyword = "#連結 #探索";
-      personaImage = "https://i.ibb.co/zWm6BGxT/IMG-5301.jpg";
-    } else if (quizResult?.seat === "lounge") {
-      zhName = "微醺引力點";
-      enName = "THE MAGNET";
-      personaQuote =
-        "舒適不是為了封閉，而是為了敞開。你就是夜晚的引力中心，吸引著頻率相同的靈魂。";
-      personaKeyword = "#交流 #吸引";
-      personaImage = "https://i.ibb.co/S4tNyR2d/IMG-5303.jpg";
-    } else if (quizResult?.seat === "table") {
-      zhName = "城市漫遊者";
-      enName = "THE DRIFTER";
-      personaQuote =
-        "不被座位束縛，你的雷達隨時開啟，準備在人海中捕捉下一個有趣的訊號。";
-      personaKeyword = "#流動 #觀察";
-      personaImage = "https://i.ibb.co/0yNSCz9p/IMG-5300.jpg";
-    } else if (quizResult?.seat === "anywhere") {
-      zhName = "頻率共振者";
-      enName = "THE RESONATOR";
-      personaQuote =
-        "座位只是形式，重點是頻率。只要音樂對了，整個空間都是你的主場。";
-      personaKeyword = "#直覺 #氛圍";
-      personaImage = "https://i.ibb.co/5XZnpVbs/IMG-5299.jpg";
-    }
-  }
+  if (quizResult?.seat === "bar")
+    persona = {
+      zh: "話題領航員",
+      en: "THE NAVIGATOR",
+      quote: "你掌握著夜晚的航向，與調酒師的對話是你探索未知的羅盤。",
+      kw: "#連結 #探索",
+      img: "https://i.ibb.co/zWm6BGxT/IMG-5301.jpg",
+    };
+  if (quizResult?.seat === "lounge")
+    persona = {
+      zh: "微醺引力點",
+      en: "THE MAGNET",
+      quote: "你就是夜晚的引力中心，吸引著頻率相同的靈魂。",
+      kw: "#交流 #吸引",
+      img: "https://i.ibb.co/S4tNyR2d/IMG-5303.jpg",
+    };
+  if (quizResult?.seat === "table")
+    persona = {
+      zh: "城市漫遊者",
+      en: "THE DRIFTER",
+      quote: "不被座位束縛，你的雷達隨時開啟，準備在人海中捕捉訊號。",
+      kw: "#流動 #觀察",
+      img: "https://i.ibb.co/0yNSCz9p/IMG-5300.jpg",
+    };
+  if (quizResult?.seat === "anywhere")
+    persona = {
+      zh: "頻率共振者",
+      en: "THE RESONATOR",
+      quote: "座位只是形式。只要音樂對了，整個空間都是你的主場。",
+      kw: "#直覺 #氛圍",
+      img: "https://i.ibb.co/5XZnpVbs/IMG-5299.jpg",
+    };
 
   return (
-    <div className="h-full w-full flex flex-col items-center justify-start animate-fade-in relative z-10 overflow-y-auto bg-[#050505] no-scrollbar pb-20">
-      {/* ★ 真正滿版視覺：移除 Inset Border，加強陰影 ★ */}
-      <div className="w-full max-w-sm aspect-[9/16] min-h-[560px] relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,1)] flex flex-col justify-end mx-auto mt-0 rounded-b-[48px] md:rounded-[48px] md:mt-6">
-        {/* 背景圖片：直接滿版貼合邊緣 + 放大 1.1 倍裁切掉原圖邊框 */}
+    <div className="h-full flex flex-col items-center justify-start overflow-y-auto no-scrollbar pb-20 bg-black">
+      {/* ★ 視覺優化：真正滿版無框 ★ */}
+      <div className="w-full max-w-sm aspect-[9/16] relative overflow-hidden flex flex-col justify-end shadow-[0_40px_100px_rgba(0,0,0,1)] rounded-b-[48px] md:rounded-[48px] md:mt-8 bg-[#0a0a0a]">
         <img
-          src={personaImage}
-          alt="Background"
+          src={persona.img}
           className="absolute inset-0 w-full h-full object-cover scale-110 transition-all duration-[3000ms]"
+          alt="Result"
         />
-
-        {/* 漸層遮罩：極深底部，確保文字可讀性 */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#000] via-black/30 to-transparent"></div>
-
-        {/* 內容區：古銅/象牙白排版 */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"></div>
         <div className="relative z-10 p-10 text-center pb-14">
-          <p className="text-[11px] text-[#a89f91] font-bold tracking-[0.6em] uppercase mb-6 font-serif drop-shadow-md">
-            {personaKeyword}
+          <p className="text-[10px] text-[#a89f91] font-bold tracking-[0.6em] uppercase mb-6 drop-shadow-md">
+            {persona.kw}
           </p>
-
           <div className="mb-12">
-            <h2 className="text-4xl font-serif text-[#dcdcdc] tracking-[0.2em] mb-4 drop-shadow-[0_4px_12px_rgba(0,0,0,1)]">
-              {zhName}
+            <h2 className="text-4xl font-serif text-[#dcdcdc] tracking-[0.2em] mb-4">
+              {persona.zh}
             </h2>
-            <div className="w-16 h-[1px] bg-[#5c4033] mx-auto mb-5"></div>
-            {/* 英文名稱：改為低調象牙白，加強凹陷陰影 */}
-            <p className="text-[13px] text-[#a89f91] font-bold tracking-[0.4em] font-mono bg-black/60 py-2 px-6 inline-block rounded-full border border-[#333] whitespace-nowrap backdrop-blur-md">
-              {enName}
+            <div className="w-16 h-[1px] bg-[#5c4033] mx-auto mb-6"></div>
+            {/* ★ 修正：英文高亮標籤 ★ */}
+            <p className="text-[13px] text-white font-bold tracking-[0.4em] font-mono bg-black/60 px-6 py-2 rounded-full border border-white/10 backdrop-blur-md inline-block whitespace-nowrap shadow-lg">
+              {persona.en}
             </p>
           </div>
-
-          <div className="relative py-8 border-t border-[#333]">
-            <p className="text-[#a89f91] font-serif italic text-[15px] leading-relaxed drop-shadow-lg px-2">
-              "{personaQuote}"
-            </p>
-          </div>
-
-          {/* 品牌標誌：改為古銅燙金質感（無動畫、沈穩色） */}
-          <div className="flex items-center justify-center gap-8 mt-4 opacity-95">
-            <div className="text-right">
-              <p className="bronze-text text-[11px] font-serif tracking-[0.3em] uppercase mb-1">
-                30_speakeasy
-              </p>
-              <p className="text-[8px] text-[#444] font-mono tracking-tighter uppercase">
-                Est. MMXXIII
-              </p>
+          <p className="text-[#a89f91] font-serif italic text-sm leading-relaxed mb-10 px-2 drop-shadow-md">
+            "{persona.quote}"
+          </p>
+          <div className="flex items-center justify-center gap-6">
+            <div className="text-right font-mono text-[10px] text-[#a89f91] tracking-[0.2em]">
+              30_speakeasy
             </div>
-            {/* 可點擊的 IG 按鈕 */}
+            {/* ★ 修正：可點擊的 IG 連結 ★ */}
             <a
-              href={IG_PROFILE_URL}
+              href={IG_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white p-1.5 rounded shadow-2xl cursor-pointer hover:scale-105 transition-transform flex flex-col items-center"
+              className="bg-white p-1.5 rounded shadow-2xl transition-transform hover:scale-110 flex flex-col items-center"
             >
               <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${IG_PROFILE_URL}`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(
+                  IG_URL
+                )}`}
                 alt="QR"
-                className="w-9 h-9 opacity-90"
+                className="w-10 h-10 opacity-90"
               />
-              <span className="text-[5px] text-black mt-0.5 font-bold whitespace-nowrap uppercase tracking-wider">
+              <span className="text-[5px] text-black font-bold mt-0.5 whitespace-nowrap uppercase tracking-wider">
                 Tap to Follow
               </span>
             </a>
           </div>
         </div>
       </div>
-
-      {/* 2. 預約資訊區 */}
-      <div className="w-full max-w-sm px-6 mt-12">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-2 h-2 rounded-full bg-amber-900 shadow-[0_0_10px_rgba(74,4,4,0.6)]"></div>
-          <span className="text-[#8a6a57] font-serif text-sm tracking-widest uppercase">
-            Reservation Confirmed
-          </span>
-        </div>
-
-        <div className="bg-[#111] p-8 rounded-[32px] border border-[#222] text-sm space-y-4 shadow-2xl">
-          <div className="flex justify-between items-center border-b border-zinc-800/50 pb-4">
-            <span className="text-zinc-500 uppercase text-[10px] tracking-widest">
-              Guest
-            </span>
-            <span className="text-[#e5d5b0] font-serif text-lg">
+      <div className="w-full max-w-sm px-6 mt-12 space-y-4">
+        <div className="bg-[#111] p-8 border border-[#222] rounded-[32px] text-sm shadow-xl">
+          <div className="flex justify-between border-b border-white/5 pb-4 mb-4 text-zinc-500 uppercase tracking-widest text-[10px]">
+            <span>Guest</span>
+            <span className="text-[#e5d5b0] font-serif text-base">
               {data.name}
             </span>
           </div>
-          <div className="flex justify-between items-center border-b border-zinc-800/50 pb-4">
-            <span className="text-zinc-500 uppercase text-[10px] tracking-widest">
-              Date & Time
-            </span>
-            <span className="text-[#e5d5b0] font-mono">
+          <div className="flex justify-between text-zinc-500 uppercase tracking-widest text-[10px]">
+            <span>Arrival</span>
+            <span className="text-[#e5d5b0] font-mono text-sm">
               {data.date} {data.time}
             </span>
           </div>
-          <div className="flex justify-between items-center pb-2">
-            <span className="text-zinc-500 uppercase text-[10px] tracking-widest">
-              Guests
-            </span>
-            <span className="text-[#e5d5b0]">{data.guests} People</span>
-          </div>
-          {hasQuizData && (
-            <div className="pt-5 border-t border-zinc-800 flex items-center justify-center gap-3 text-[#a89f91] text-[11px] tracking-[0.25em] font-bold opacity-70">
-              <Lock size={12} /> THIRTY TALK UNLOCKED
-            </div>
-          )}
         </div>
-
-        {/* 按鈕組 */}
-        <div className="mt-10 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <a
-              href={createGoogleCalendarLink()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-zinc-900 border border-zinc-800 hover:border-[#a89f91] text-zinc-500 hover:text-[#e5d5b0] py-4 rounded-2xl flex items-center justify-center gap-2 text-[11px] transition-all uppercase tracking-widest font-bold"
-            >
-              <CalendarPlus size={14} /> Google
-            </a>
-            <button
-              onClick={downloadICSFile}
-              className="bg-zinc-900 border border-zinc-800 hover:border-white text-zinc-500 hover:text-white py-4 rounded-2xl flex items-center justify-center gap-2 text-[11px] transition-all uppercase tracking-widest font-bold"
-            >
-              <Calendar size={14} /> Apple/iCal
-            </button>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={onReplay}
-              className="flex-1 py-4 text-zinc-600 hover:text-zinc-300 border border-zinc-800 hover:border-zinc-700 rounded-2xl flex items-center justify-center gap-2 text-[10px] transition-colors uppercase tracking-[0.2em]"
-            >
-              <RotateCcw size={12} /> Replay
-            </button>
-            <Button
-              onClick={onHome}
-              variant="outline"
-              className="flex-[2] py-4 text-[11px] tracking-[0.2em] rounded-2xl"
-            >
-              Back to Entrance
-            </Button>
-          </div>
-        </div>
-
-        {/* 家規區 */}
-        <div className="mt-12 border-t border-zinc-800 pt-10 pb-10">
-          <h4 className="text-zinc-600 text-[10px] uppercase tracking-[0.4em] mb-8 text-center">
-            House Rules
-          </h4>
-          <div className="space-y-8">
-            <div className="flex gap-5">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#4a0404] flex-shrink-0 shadow-lg">
-                <Volume2 size={18} />
-              </div>
-              <div>
-                <p className="text-zinc-200 text-sm font-serif mb-2 tracking-wide">
-                  輕聲細語
-                </p>
-                <p className="text-zinc-500 text-xs leading-relaxed font-light">
-                  為了維護微醺的品質，22:00 後請降低音量，讓靈魂對話取代喧嘩。
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-5">
-              <div className="w-10 h-10 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-[#4a0404] flex-shrink-0 shadow-lg">
-                <Flame size={18} />
-              </div>
-              <div>
-                <p className="text-zinc-200 text-sm font-serif mb-2 tracking-wide">
-                  注意火源
-                </p>
-                <p className="text-zinc-500 text-xs leading-relaxed font-light">
-                  若需吞雲吐霧，請確認菸蒂已完全熄滅，留給夜晚清新的呼吸。
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <Button
+          onClick={() => window.location.reload()}
+          variant="outline"
+          className="w-full py-4 text-xs tracking-widest"
+        >
+          Back to Entrance
+        </Button>
       </div>
-      <style>{`.bronze-text { color: #a89f91; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); font-weight: 500; }`}</style>
     </div>
   );
 };
 
-// --- 管理後台 ---
+// --- Admin Panel ---
 const AdminPanel = ({
   reservations,
   availability,
@@ -887,207 +611,140 @@ const AdminPanel = ({
 }) => {
   const [login, setLogin] = useState(false);
   const [pwd, setPwd] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
   const [view, setView] = useState("bookings");
-
-  if (!login) {
+  if (!login)
     return (
-      <div className="h-full flex flex-col items-center justify-center bg-[#0a0a0a] relative z-20">
-        <div className="p-12 bg-black border border-zinc-800 w-80 text-center shadow-2xl rounded-[40px]">
-          <Lock className="mx-auto text-[#4a0404] mb-8" size={36} />
-          <h3 className="text-[#e5d5b0] font-serif mb-8 tracking-[0.4em] uppercase">
-            Staff Only
-          </h3>
+      <div className="h-full flex items-center justify-center bg-black p-10 z-50">
+        <div className="p-10 border border-[#222] w-full max-w-sm text-center bg-[#0a0a0a] rounded-[40px] shadow-2xl">
+          <Lock className="mx-auto text-[#4a0404] mb-8" size={32} />
           <input
             type="password"
             placeholder="Passcode"
-            className="w-full bg-[#111] border border-zinc-800 p-4 text-white mb-6 text-center focus:border-[#4a0404] outline-none font-mono rounded-2xl transition-all"
+            className="w-full bg-[#111] border border-[#222] p-4 text-white mb-6 text-center outline-none rounded-xl"
             onChange={(e) => setPwd(e.target.value)}
           />
           <Button
-            className="w-full py-4 rounded-2xl shadow-xl"
-            onClick={() =>
-              pwd === "3030" ? setLogin(true) : alert("Access Denied")
-            }
+            className="w-full py-4 rounded-xl"
+            onClick={() => (pwd === "3030" ? setLogin(true) : alert("Denied"))}
           >
-            Unlock Vault
+            Unlock Staff View
           </Button>
           <button
             onClick={onExit}
-            className="text-zinc-600 text-[10px] mt-10 underline uppercase tracking-[0.3em] hover:text-zinc-400 transition-colors"
+            className="mt-8 text-zinc-600 text-xs tracking-widest uppercase underline underline-offset-4"
           >
-            Exit Manager
+            Exit
           </button>
         </div>
       </div>
     );
-  }
-
   return (
-    <div className="h-full bg-[#0a0a0a] p-6 overflow-y-auto relative z-20 no-scrollbar">
-      <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-6 pt-2">
-        <h2 className="text-xl text-[#e5d5b0] font-serif tracking-[0.2em] uppercase font-bold">
-          Manager
+    <div className="h-full bg-black p-6 overflow-y-auto no-scrollbar relative z-20">
+      <div className="flex justify-between items-center mb-8 border-b border-[#222] pb-6">
+        <h2 className="text-[#e5d5b0] font-serif uppercase tracking-widest">
+          Thirty Console
         </h2>
         <div className="flex gap-2">
           <button
             onClick={() => setView("bookings")}
-            className={`px-6 py-2 text-[10px] tracking-[0.2em] uppercase rounded-full transition-all ${
+            className={`px-4 py-2 text-[10px] rounded-full transition-all ${
               view === "bookings"
                 ? "bg-[#4a0404] text-white"
-                : "text-zinc-600 bg-zinc-900"
+                : "bg-zinc-900 text-zinc-500"
             }`}
           >
-            Bookings
+            BOOKINGS
           </button>
           <button
-            onClick={() => setView("calendar")}
-            className={`px-6 py-2 text-[10px] tracking-[0.2em] uppercase rounded-full transition-all ${
-              view === "calendar"
+            onClick={() => setView("cal")}
+            className={`px-4 py-2 text-[10px] rounded-full transition-all ${
+              view === "cal"
                 ? "bg-[#4a0404] text-white"
-                : "text-zinc-600 bg-zinc-900"
+                : "bg-zinc-900 text-zinc-500"
             }`}
           >
-            Schedule
+            CALENDAR
           </button>
-          <button
+          <X
+            size={20}
+            className="ml-4 text-zinc-500 cursor-pointer"
             onClick={onExit}
-            className="p-2 text-zinc-600 hover:text-white transition-colors"
-          >
-            <X size={20} />
-          </button>
+          />
         </div>
       </div>
-
       {view === "bookings" ? (
         <div className="space-y-4">
-          {reservations.length === 0 ? (
-            <div className="text-zinc-700 italic p-20 border border-zinc-900 border-dashed text-center rounded-[40px]">
-              No active bookings.
-            </div>
-          ) : (
-            reservations.map((res) => (
-              <div
-                key={res.id}
-                className="bg-[#111] p-6 border border-zinc-800 hover:border-[#4a0404] transition-all rounded-[32px] group relative shadow-lg"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <div className="text-[#e5d5b0] font-bold text-xl font-serif mb-1">
-                      {res.name}
-                    </div>
-                    <div className="text-zinc-500 text-xs font-mono tracking-widest uppercase">
-                      {res.contact} | {res.guests} PPL
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-[#e5d5b0] font-mono text-base">
-                      {res.time}
-                    </div>
-                    <div className="text-zinc-600 text-[10px] font-mono">
-                      {res.date}
-                    </div>
-                    <button
-                      onClick={async () => {
-                        if (confirm("確定刪除？"))
-                          await deleteDoc(
-                            doc(
-                              db,
-                              "artifacts",
-                              appId,
-                              "public",
-                              "data",
-                              "thirty_bookings",
-                              res.id
-                            )
-                          );
-                      }}
-                      className="text-red-900/40 hover:text-red-600 mt-4 transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-                {res.note && (
-                  <div className="bg-black/50 p-4 mb-2 text-zinc-500 text-xs italic rounded-2xl border border-zinc-900/50">
-                    "{res.note}"
-                  </div>
-                )}
+          {reservations.map((res) => (
+            <div
+              key={res.id}
+              className="p-6 bg-[#111] border border-[#222] rounded-2xl relative group hover:border-[#4a0404] transition-all"
+            >
+              <div className="text-[#e5d5b0] font-bold text-lg font-serif mb-1">
+                {res.name}
               </div>
-            ))
-          )}
+              <div className="text-zinc-500 text-xs font-mono tracking-widest uppercase">
+                {res.contact} | {res.guests} PPL
+              </div>
+              <div className="mt-2 text-zinc-400 text-sm">
+                {res.date} {res.time}
+              </div>
+              {res.note && (
+                <div className="mt-4 p-3 bg-black/50 text-zinc-600 text-xs italic rounded-lg">
+                  "{res.note}"
+                </div>
+              )}
+              <Trash2
+                size={16}
+                className="absolute top-6 right-6 text-red-900 cursor-pointer hover:text-red-500 opacity-30 group-hover:opacity-100 transition-opacity"
+                onClick={async () => {
+                  if (window.confirm("Delete this booking?"))
+                    await deleteDoc(
+                      doc(
+                        db,
+                        "artifacts",
+                        appId,
+                        "public",
+                        "data",
+                        "thirty_bookings",
+                        res.id
+                      )
+                    );
+                }}
+              />
+            </div>
+          ))}
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="bg-[#111] p-8 border border-zinc-800 rounded-[40px] shadow-2xl">
-            <div className="flex gap-3 mb-8">
-              <input
-                type="date"
-                className="bg-black border border-zinc-800 text-zinc-300 p-4 text-xs flex-1 outline-none rounded-2xl focus:border-amber-600 transition-all"
-                onChange={(e) => setSelectedDate(e.target.value)}
-              />
-              <Button
-                onClick={() =>
-                  selectedDate &&
-                  onUpdateAvailability(selectedDate, [
-                    "19:00",
-                    "20:00",
-                    "21:00",
-                    "22:00",
-                    "23:00",
-                  ])
-                }
-                variant="outline"
-                className="text-[10px] rounded-2xl px-8 uppercase tracking-widest font-bold"
+        <div className="space-y-4">
+          {Object.keys(availability).map((d) => (
+            <div
+              key={d}
+              className="p-6 bg-[#111] border border-[#222] rounded-2xl flex justify-between items-center"
+            >
+              <span className="text-[#e5d5b0] font-mono">{d}</span>
+              <button
+                onClick={() => onUpdateAvailability(d, null)}
+                className="text-red-900 text-[10px] font-bold tracking-widest uppercase"
               >
-                Open Date
-              </Button>
+                Close
+              </button>
             </div>
-            <div className="space-y-8">
-              {Object.keys(availability)
-                .sort()
-                .map((date) => (
-                  <div
-                    key={date}
-                    className="bg-black/40 p-6 border border-zinc-900 rounded-[32px]"
-                  >
-                    <div className="flex justify-between items-center mb-6 pt-2">
-                      <span className="text-[#e5d5b0] font-mono text-sm border-b border-amber-900/50 pb-1">
-                        {date}
-                      </span>
-                      <button
-                        onClick={() => onUpdateAvailability(date, null)}
-                        className="text-zinc-700 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-5 gap-3">
-                      {ALL_POSSIBLE_SLOTS.map((slot) => (
-                        <button
-                          key={slot}
-                          onClick={() => {
-                            const current = availability[date] || [];
-                            onUpdateAvailability(
-                              date,
-                              current.includes(slot)
-                                ? current.filter((s) => s !== slot)
-                                : [...current, slot].sort()
-                            );
-                          }}
-                          className={`text-[10px] py-3 border rounded-xl transition-all ${
-                            availability[date].includes(slot)
-                              ? "bg-[#4a0404] text-white border-[#4a0404] shadow-[0_5px_15px_rgba(74,4,4,0.4)]"
-                              : "bg-transparent text-zinc-700 border-zinc-900 hover:border-zinc-700"
-                          }`}
-                        >
-                          {slot}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-            </div>
+          ))}
+          <div className="p-8 border border-dashed border-[#333] text-center rounded-2xl bg-[#0a0a0a]">
+            <input
+              type="date"
+              className="bg-black border border-[#222] text-white p-3 rounded-lg outline-none"
+              id="newD"
+            />
+            <button
+              className="ml-4 text-[#e5d5b0] font-bold uppercase text-xs"
+              onClick={() => {
+                const v = document.getElementById("newD").value;
+                if (v) onUpdateAvailability(v, ALL_POSSIBLE_SLOTS);
+              }}
+            >
+              Open New Date
+            </button>
           </div>
         </div>
       )}
@@ -1095,31 +752,27 @@ const AdminPanel = ({
   );
 };
 
-// --- App Root ---
+// --- Main App ---
 export default function App() {
   const [step, setStep] = useState("landing");
-  const [quizAnswers, setQuizAnswers] = useState({});
-  const [bookingData, setBookingData] = useState({});
+  const [quizAns, setQuizAns] = useState({});
+  const [bookData, setBookData] = useState({});
   const [reservations, setReservations] = useState([]);
-  const [logoClicks, setLogoClicks] = useState(0);
   const [availability, setAvailability] = useState({});
-  const [savedUser, setSavedUser] = useState(null);
   const [user, setUser] = useState(null);
+  const [logoClicks, setLogoClicks] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [savedUser, setSavedUser] = useState(null);
 
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.tailwindcss.com";
-    document.head.appendChild(script);
-    const localData = localStorage.getItem("thirty_user_info");
-    if (localData) setSavedUser(JSON.parse(localData));
-    if (!auth) return;
+    const data = localStorage.getItem("thirty_user_info");
+    if (data) setSavedUser(JSON.parse(data));
     signInAnonymously(auth).catch(console.error);
     return onAuthStateChanged(auth, setUser);
   }, []);
 
   useEffect(() => {
-    if (!user || !db) return;
+    if (!user) return;
     const unsub1 = onSnapshot(
       doc(
         db,
@@ -1134,15 +787,12 @@ export default function App() {
     );
     const unsub2 = onSnapshot(
       collection(db, "artifacts", appId, "public", "data", "thirty_bookings"),
-      (snap) => {
-        const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      (snap) =>
         setReservations(
-          docs.sort(
-            (a, b) =>
-              new Date(`${b.date}T${b.time}`) - new Date(`${a.date}T${a.time}`)
-          )
-        );
-      }
+          snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }))
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        )
     );
     return () => {
       unsub1();
@@ -1150,25 +800,18 @@ export default function App() {
     };
   }, [user]);
 
-  const handleBookingSubmit = async (data) => {
-    if (!user || !db) return;
+  const handleBooking = async (data) => {
     setIsSubmitting(true);
     try {
       localStorage.setItem(
         "thirty_user_info",
         JSON.stringify({ name: data.name, contact: data.contact })
       );
-      setSavedUser({ name: data.name, contact: data.contact });
       await addDoc(
         collection(db, "artifacts", appId, "public", "data", "thirty_bookings"),
-        {
-          ...data,
-          quizResult: quizAnswers,
-          createdAt: new Date().toISOString(),
-          userId: user.uid,
-        }
+        { ...data, quizResult: quizAns, createdAt: new Date().toISOString() }
       );
-      setBookingData(data);
+      setBookData(data);
       setStep("success");
     } catch (e) {
       console.error(e);
@@ -1178,24 +821,22 @@ export default function App() {
   };
 
   return (
-    <div className="w-full h-screen bg-[#050505] text-[#dcdcdc] font-['Noto_Serif_TC',_'serif'] overflow-hidden selection:bg-[#4a0404] selection:text-white relative">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#050505] via-[#4a0404] to-[#050505] opacity-50 z-50"></div>
-      <div className="relative z-10 w-full h-full max-w-7xl mx-auto no-scrollbar">
+    <div className="w-full h-screen bg-black text-[#dcdcdc] font-serif overflow-hidden relative selection:bg-[#4a0404]">
+      {/* 隱藏入口：點擊左上角 5 次進入後台 */}
+      <div
+        className="absolute top-0 left-0 w-20 h-20 z-[100]"
+        onClick={() =>
+          logoClicks + 1 >= 5
+            ? (setStep("admin"), setLogoClicks(0))
+            : setLogoClicks((v) => v + 1)
+        }
+      ></div>
+
+      <div className="relative z-10 w-full h-full no-scrollbar">
         {step === "landing" && (
           <LandingPage
-            onStart={() => {
-              setQuizAnswers({});
-              setStep("quiz");
-            }}
-            onSkip={() => {
-              setQuizAnswers({});
-              setStep("booking");
-            }}
-            onLogoClick={() =>
-              logoClicks + 1 >= 5
-                ? (setStep("admin"), setLogoClicks(0))
-                : setLogoClicks((v) => v + 1)
-            }
+            onStart={() => setStep("quiz")}
+            onSkip={() => setStep("booking")}
             savedUser={savedUser}
           />
         )}
@@ -1204,30 +845,22 @@ export default function App() {
             onAnswerComplete={(q, a) =>
               q === "DONE"
                 ? setStep("teaser")
-                : setQuizAnswers((v) => ({ ...v, [q]: a }))
+                : setQuizAns((v) => ({ ...v, [q]: a }))
             }
-            currentAnswers={quizAnswers}
+            currentAnswers={quizAns}
           />
         )}
         {step === "teaser" && <TeaserPage onNext={() => setStep("booking")} />}
         {step === "booking" && (
           <BookingPage
-            onSubmit={handleBookingSubmit}
+            onSubmit={handleBooking}
             availability={availability}
             isSubmitting={isSubmitting}
             savedUser={savedUser}
           />
         )}
         {step === "success" && (
-          <SuccessPage
-            data={bookingData}
-            quizResult={quizAnswers}
-            onHome={() => setStep("landing")}
-            onReplay={() => {
-              setQuizAnswers({});
-              setStep("quiz");
-            }}
-          />
+          <SuccessPage data={bookData} quizResult={quizAns} />
         )}
         {step === "admin" && (
           <AdminPanel
@@ -1236,7 +869,6 @@ export default function App() {
             onUpdateAvailability={async (d, s) => {
               const next = { ...availability };
               s === null ? delete next[d] : (next[d] = s);
-              setAvailability(next);
               await setDoc(
                 doc(
                   db,
@@ -1255,7 +887,7 @@ export default function App() {
           />
         )}
       </div>
-      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; } .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; } @keyframes fade-in { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } } .animate-fade-in { animation: fade-in 1.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }`}</style>
+      <style>{`.no-scrollbar::-webkit-scrollbar { display: none; } @keyframes fade-in { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } } .animate-fade-in { animation: fade-in 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }`}</style>
     </div>
   );
 }
