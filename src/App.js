@@ -46,7 +46,6 @@ import {
   MapPin,
   Gem,
   Ghost,
-  Instagram,
 } from "lucide-react";
 
 import { initializeApp } from "firebase/app";
@@ -64,7 +63,7 @@ import {
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 // ==========================================
-// ★ 設定區：Firebase & EmailJS 鑰匙 ★
+// ★ 設定區：Firebase 鑰匙 ★
 // ==========================================
 
 const firebaseConfig = {
@@ -269,19 +268,6 @@ const Card = ({ children, className = "", onClick, selected = false }) => (
 // --- Pages ---
 
 const LandingPage = ({ onStart, onSkip, onLogoClick, savedUser }) => {
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  // ★ 修改：智慧跳過邏輯 ★
-  const handleSkipClick = () => {
-    if (savedUser) {
-      // 如果是回頭客，直接跳過，不囉嗦
-      onSkip();
-    } else {
-      // 如果是新客，顯示挽留彈窗
-      setShowConfirm(true);
-    }
-  };
-
   return (
     <div className="h-full flex flex-col items-center justify-center text-center px-6 animate-fade-in relative z-10">
       <div
@@ -331,52 +317,13 @@ const LandingPage = ({ onStart, onSkip, onLogoClick, savedUser }) => {
           {savedUser ? "再次探索靈魂" : "Begin The Journey"}{" "}
           <ChevronRight size={16} />
         </Button>
-        <div className="flex flex-col items-center gap-2 group">
-          <button
-            onClick={handleSkipClick}
-            className="text-zinc-300 text-xs tracking-widest uppercase border-b border-zinc-500 hover:border-white hover:text-white transition-all pb-0.5"
-          >
-            跳過測驗，直接預約
-          </button>
-        </div>
+        <button
+          onClick={onSkip}
+          className="text-zinc-300 text-xs tracking-widest uppercase border-b border-zinc-500 hover:border-white transition-all pb-0.5"
+        >
+          跳過測驗，直接預約
+        </button>
       </div>
-
-      {showConfirm && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm p-6 animate-fade-in">
-          <div className="bg-[#151515] border border-[#4a0404] p-8 rounded-sm max-w-sm text-center shadow-[0_0_50px_rgba(74,4,4,0.3)]">
-            <div className="mb-6 flex justify-center">
-              <div className="w-12 h-12 rounded-full bg-[#2a0e0e] flex items-center justify-center text-[#4a0404]">
-                <AlertCircle size={24} />
-              </div>
-            </div>
-            <h3 className="text-xl text-[#e5d5b0] font-serif mb-4 tracking-wide">
-              確定要略過嗎？
-            </h3>
-            <p className="text-[#a89f91] text-sm leading-relaxed mb-8">
-              跳過靈魂測驗，您將錯失體驗
-              <br />
-              <span className="text-[#e5d5b0] font-bold border-b border-[#4a0404] pb-0.5">
-                「Thirty Talk」這個遊戲
-              </span>{" "}
-              的機會。
-              <br />
-              <br />
-              我們將無法為您調製專屬風味，僅能提供一般標準座位的預約服務。
-            </p>
-            <div className="flex flex-col gap-3">
-              <Button onClick={onStart} variant="primary">
-                返回測驗 (推薦)
-              </Button>
-              <button
-                onClick={onSkip}
-                className="text-zinc-500 text-xs py-3 hover:text-zinc-300 transition-colors hover:underline"
-              >
-                沒關係，忍痛放棄
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
@@ -469,7 +416,6 @@ const QuizPage = ({ onAnswerComplete, currentAnswers }) => {
   );
 };
 
-// 簡約版 TeaserPage
 const TeaserPage = ({ onNext }) => (
   <div className="h-full flex flex-col items-center justify-center text-center px-6 animate-fade-in bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#2a0e0e] to-[#0a0a0a] relative z-10">
     <div className="border border-[#e5d5b0] p-1 inline-block mb-8 rounded-sm">
@@ -668,7 +614,7 @@ const BookingPage = ({ onSubmit, availability, isSubmitting, savedUser }) => {
 const SuccessPage = ({ data, quizResult, onHome, onReplay }) => {
   const hasQuizData = quizResult && Object.keys(quizResult).length > 0;
 
-  // ★ IG 連結設定區：請確認這是正確的 IG 連結 ★
+  // ★ IG 連結設定區 ★
   const IG_PROFILE_URL =
     "https://www.instagram.com/30_speakeasy?igsh=MTRrZGZnbHBxbG42bw%3D%3D&utm_source=qr";
 
@@ -754,13 +700,17 @@ const SuccessPage = ({ data, quizResult, onHome, onReplay }) => {
     <div className="h-full w-full flex flex-col items-center justify-start animate-fade-in relative z-10 overflow-y-auto bg-[#050505] no-scrollbar pb-20">
       {/* ★ 真正滿版視覺：移除 Inset Border，加強陰影 ★ */}
       <div className="w-full max-w-sm aspect-[9/16] min-h-[560px] relative overflow-hidden shadow-[0_40px_100px_rgba(0,0,0,1)] flex flex-col justify-end mx-auto mt-0 rounded-b-[48px] md:rounded-[48px] md:mt-6">
+        {/* 背景圖片：直接滿版貼合邊緣 + 放大 1.1 倍裁切掉原圖邊框 */}
         <img
           src={personaImage}
           alt="Background"
-          className="absolute inset-0 w-full h-full object-cover transition-all duration-[3000ms]"
+          className="absolute inset-0 w-full h-full object-cover scale-110 transition-all duration-[3000ms]"
         />
+
+        {/* 漸層遮罩：極深底部，確保文字可讀性 */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#000] via-black/30 to-transparent"></div>
 
+        {/* 內容區：古銅/象牙白排版 */}
         <div className="relative z-10 p-10 text-center pb-14">
           <p className="text-[11px] text-[#a89f91] font-bold tracking-[0.6em] uppercase mb-6 font-serif drop-shadow-md">
             {personaKeyword}
@@ -771,7 +721,8 @@ const SuccessPage = ({ data, quizResult, onHome, onReplay }) => {
               {zhName}
             </h2>
             <div className="w-16 h-[1px] bg-[#5c4033] mx-auto mb-5"></div>
-            <p className="text-[13px] text-[#a89f91] font-bold tracking-[0.4em] font-mono bg-black/40 py-1.5 px-4 inline-block rounded-full border border-[#333]">
+            {/* 英文名稱：改為低調象牙白，加強凹陷陰影 */}
+            <p className="text-[13px] text-[#a89f91] font-bold tracking-[0.4em] font-mono bg-black/60 py-2 px-6 inline-block rounded-full border border-[#333] whitespace-nowrap backdrop-blur-md">
               {enName}
             </p>
           </div>
@@ -782,7 +733,7 @@ const SuccessPage = ({ data, quizResult, onHome, onReplay }) => {
             </p>
           </div>
 
-          {/* 品牌標誌：改為 IG 連結按鈕 (手機友善) */}
+          {/* 品牌標誌：改為古銅燙金質感（無動畫、沈穩色） */}
           <div className="flex items-center justify-center gap-8 mt-4 opacity-95">
             <div className="text-right">
               <p className="bronze-text text-[11px] font-serif tracking-[0.3em] uppercase mb-1">
@@ -792,7 +743,7 @@ const SuccessPage = ({ data, quizResult, onHome, onReplay }) => {
                 Est. MMXXIII
               </p>
             </div>
-            {/* ★ 修改點：QR Code 包裹在 <a> 標籤中，點擊可直接跳轉 IG ★ */}
+            {/* 可點擊的 IG 按鈕 */}
             <a
               href={IG_PROFILE_URL}
               target="_blank"
@@ -804,7 +755,7 @@ const SuccessPage = ({ data, quizResult, onHome, onReplay }) => {
                 alt="QR"
                 className="w-9 h-9 opacity-90"
               />
-              <span className="text-[6px] text-black mt-0.5 font-bold whitespace-nowrap">
+              <span className="text-[5px] text-black mt-0.5 font-bold whitespace-nowrap uppercase tracking-wider">
                 Tap to Follow
               </span>
             </a>
@@ -922,20 +873,12 @@ const SuccessPage = ({ data, quizResult, onHome, onReplay }) => {
           </div>
         </div>
       </div>
-
-      {/* ★ 古銅質感 CSS ★ */}
-      <style>{`
-        .bronze-text {
-          color: #a89f91;
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-          font-weight: 500;
-        }
-      `}</style>
+      <style>{`.bronze-text { color: #a89f91; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); font-weight: 500; }`}</style>
     </div>
   );
 };
 
-// --- 管理後台 (Dashboard) ---
+// --- 管理後台 ---
 const AdminPanel = ({
   reservations,
   availability,
